@@ -1,0 +1,83 @@
+SWLOR Toolset Launcher 1.1 - update validation
+Date: 2026-09-27
+
+REPRODUCED IN THIS SESSION
+- Version 1.1 adds Check for updates and Update and launch. Recompiled x64 EXE
+  with the updated embedded backend; rendered and inspected the new buttons.
+- Reran all 29 baseline tests under Windows PowerShell 5.1: passed.
+- Ran 15 additional update tests with isolated Git repositories: passed.
+  Covered clean plan validation; tracked, untracked, staged and hidden local
+  edits; HAK edits; ignored-file collision preservation; successful main+HAK
+  update; interrupted update resume; refusal to resume over intervening edits;
+  divergent history; non-default branch; malformed journal; fetching upstream
+  changes without switching either checkout; checks preserving authored files.
+- The original reconstruction checks below were performed earlier in this
+  same conversation. Download checks and upstream Toolset build were not
+  repeated for 1.1, whose changes affect launcher update behavior only.
+- Compiled SWLOR-Launcher.exe using the Windows Framework64 C# compiler,
+  platform x64, Windows GUI subsystem, asInvoker manifest, .NET Framework
+  4.8 target attribute. Backend.ps1 is embedded as an assembly resource.
+- Rendered the launcher form offscreen and visually inspected the English
+  layout against the user-supplied screenshot. No interactive installation
+  through the buttons was performed.
+- Ran Tests.ps1 under Windows PowerShell 5.1 in fresh disposable folders.
+  29 isolated tests passed: settings creation, nested value preservation,
+  byte-preserving original backup, unchanged settings, malformed/non-object
+  JSON rejection, SHA256/SHA512 validation, verified offline cache reuse,
+  HTTPS/host/userinfo validation, native error propagation, safe ZIP extraction,
+  traversal/absolute path rejection, extraction beyond 260 characters,
+  official/wrong repository origins, clean pinned submodules, untracked and
+  tracked HAK edits, committed and staged revision mismatches, missing EXE.
+- Downloaded official MinGit 2.55.0.5 x64 ZIP, verified its SHA256 against
+  Git for Windows release metadata, extracted it, and ran git --version:
+  git version 2.55.0.windows.5.
+- Downloaded Microsoft .NET SDK 10.0.401 win-x64 ZIP using release metadata,
+  verified SHA512, extracted into the long workspace path and successfully
+  ran dotnet --list-sdks (10.0.401).
+- Created an isolated shallow sparse upstream checkout and built the actual
+  SWLOR.Toolset project plus its referenced projects with that SDK:
+  dotnet build SWLOR.Toolset/SWLOR.Toolset.csproj -c Debug
+    -p:RunPostBuildEvent=Never --nologo
+  Result: 0 errors, 8 warnings from upstream source.
+  Upstream commit: d3422ccb25bfb3a3ec33cdf304013e0a3bab9f46
+
+BOUNDARIES
+- The large production SWLOR_Haks submodule was not downloaded here.
+  Submodule safety was exercised with disposable local Git fixtures.
+- The actual Toolset GUI, NWN asset discovery, area generation, full clean
+  installation via the launcher buttons, and successful/early-exit application
+  startup were not exercised in this session. The user's screenshot and
+  supplied earlier validation are separate evidence, not tests run here.
+- Network interruption/retry and concurrent external edits were not simulated.
+  Verified complete archives are reused; partial downloads restart.
+- Main source is never reset, cleaned or automatically updated. Version 1.1
+  explicitly fetches and fast-forwards on Update and launch, and moves HAK
+  only to the pin in that update. Changed files/history cause refusal.
+  Install initializes only a missing, empty, official pinned HAK submodule.
+  Existing initialized HAK revisions must match the main HEAD gitlink and
+  contain no tracked or untracked edits. Rebuild does not initialize HAKs.
+- Real GitHub-to-HAK updating and the complete GUI update/build/launch flow
+  were not exercised end to end; update tests used disposable local Git
+  fixtures. A missing or rewritten shallow ancestor causes safe refusal.
+- Launch requires an existing build and the private SDK receipt from setup;
+  it performs no download or build. It still validates Module and configures
+  Module Root, preserving other settings and backing up any changed JSON.
+- Tools and NuGet packages are fetched on first setup, not bundled in the ZIP.
+  Future upstream changes or network restrictions may affect installation.
+- The EXE is unsigned. No commercial signing certificate was used.
+
+SOURCE REFERENCES CHECKED
+https://github.com/zunath/SWLOR_NWN
+https://raw.githubusercontent.com/zunath/SWLOR_NWN/master/.gitmodules
+https://raw.githubusercontent.com/zunath/SWLOR_NWN/master/SWLOR.Toolset/SWLOR.Toolset.csproj
+https://raw.githubusercontent.com/zunath/SWLOR_NWN/master/SWLOR.Toolset/Settings/ToolsetSettings.cs
+https://api.github.com/repos/git-for-windows/git/releases/latest
+https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json
+
+REPRODUCE LOCAL TESTS
+From the source folder in Windows PowerShell:
+  .\Build.ps1
+  .\Tests.ps1 -TestRoot C:\a-new-disposable-test-folder
+  .\Tests.Updates.ps1 -TestRoot C:\another-new-disposable-test-folder
+Git is required for the tests. TestRoot must not already exist.
+Tests do not edit the user's real Toolset settings or source checkout.
