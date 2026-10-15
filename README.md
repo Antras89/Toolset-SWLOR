@@ -4,6 +4,8 @@ An independent, unofficial Windows launcher for the SWLOR desktop Toolset, with 
 
 This repository is maintained independently by Antras89. It is not an official SWLOR release or a fork of the SWLOR repositories. The launcher downloads the official SWLOR_NWN repository and its pinned SWLOR_Haks assets when installing the Toolset.
 
+![SWLOR Toolset Launcher 1.1 interface](docs/images/swlor-toolset-launcher.png)
+
 ## Download and start
 
 1. Download [SWLOR-Toolset1.1.zip](SWLOR-Toolset1.1.zip) and extract it.
