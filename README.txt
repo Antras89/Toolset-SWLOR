@@ -1,4 +1,4 @@
-SWLOR Toolset Launcher 1.1
+﻿SWLOR Toolset Launcher 1.2
 English edition for Windows x64
 
 GET STARTED
@@ -69,7 +69,7 @@ UPDATING AN EXISTING INSTALLATION
 3. Close the Toolset, then click Update and launch to apply available changes.
 If you have authored local areas, the updater stops instead of merging them.
 Keep your work, back it up and resolve the repository manually, or install a
-fresh copy into another parent folder. Nothing is uploaded to GitHub or a server.
+fresh copy into another parent folder. Update operations do not upload anything. The Git & Publish tab can explicitly push your commits to GitHub.
 An interrupted update can be retried with Update and launch. A journal inside
 the Git metadata records the exact main/HAK revisions for a guarded resume.
 If the source update succeeds but the build fails, fix the reported issue and
@@ -90,8 +90,11 @@ All tools are downloaded from their upstream services rather than bundled.
 
 SOURCE AND REBUILD
 The source folder includes Launcher.cs, Backend.ps1, App.manifest, Build.ps1
-and Tests.ps1 plus Tests.Updates.ps1. Backend.ps1 is embedded in the executable;
+GitPanel.cs, GitBackend.ps1, Tests.ps1, Tests.Updates.ps1, Tests.Git.ps1 and Tests.UI.ps1. Backend.ps1 is embedded in the executable;
 it need not be kept
 beside the EXE. Build.ps1 recompiles it with the Windows .NET Framework compiler.
 Tests.ps1 requires Git and a fresh disposable -TestRoot directory.
 See VALIDATION.txt for what was actually tested and remaining limits.
+
+GIT & PUBLISH (VERSION 1.2)
+See README.md for account sign-in, selecting files, creating branches, forks, commits and pushes. GitHub CLI is downloaded and SHA256-verified when needed. The Git backend is embedded in the EXE. Commit is local; Push publishes all local commits on the displayed branch after destination confirmation. HAK changes are managed separately. Browser login and live authenticated push need a manual check on your account.

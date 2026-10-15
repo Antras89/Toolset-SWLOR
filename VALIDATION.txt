@@ -1,3 +1,19 @@
+﻿VERSION 1.2 VALIDATION — 2026-10-15
+
+Windows x64 .NET Framework build passed.
+Windows PowerShell 5.1: 29 base tests, 15 updater tests, 11 Git publishing tests passed.
+Selected-file tests cover staged-file isolation, Unicode/spaces/apostrophes, untracked text/binary preview, deletion, rename, detached HEAD, stale selection, invalid destinations, changed branch/head, account mismatch and push permissions.
+Network push is mocked in the Git tests; the requested destination, explicit branch refspec, credential helper and absence of force were verified.
+Compiled UI integration instantiated the launcher with isolated preferences, loaded real changes through the embedded PowerShell backend, committed one checked file and preserved an unrelated staged file.
+Git tab was rendered and visually inspected. Original installer/updater source is unchanged.
+GitHub CLI 2.102.0 downloaded from its official release, SHA256 checked, and --version executed successfully in a disposable test directory.
+
+Not exercised: interactive browser authorization, switching between actual GitHub accounts, creating a live fork, or authenticated network push through the menu. No real SWLOR project was modified in tests. These online account actions need a manual end-to-end check.
+
+All test scripts require a fresh disposable -TestRoot directory. Run Tests.UI.ps1 with Windows PowerShell -STA. Build.ps1 embeds both Backend.ps1 and GitBackend.ps1.
+
+--- Original supplied version 1.1 validation follows ---
+
 SWLOR Toolset Launcher 1.1 - update validation
 Date: 2026-09-27
 

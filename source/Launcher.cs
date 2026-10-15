@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Security.Principal;
 [assembly: AssemblyTitle("SWLOR Toolset Launcher")]
-[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.2.0.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 internal sealed class Launcher : Form {
  readonly string state=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SWLORLauncher");
@@ -21,9 +21,9 @@ internal sealed class Launcher : Form {
  public Launcher() : this(null) { }
  public Launcher(string stateDirectory) {
   if(stateDirectory!=null) state=stateDirectory;
-  Text="SWLOR Toolset Launcher 1.1"; ClientSize=new Size(820,690); MinimumSize=new Size(750,650); Font=new Font("Segoe UI",10); BackColor=Color.FromArgb(244,246,249); StartPosition=FormStartPosition.CenterScreen;
+  Text="SWLOR Toolset Launcher 1.2"; ClientSize=new Size(820,690); MinimumSize=new Size(750,650); Font=new Font("Segoe UI",10); BackColor=Color.FromArgb(244,246,249); StartPosition=FormStartPosition.CenterScreen;
   var layout=new TableLayoutPanel { Dock=DockStyle.Fill, Padding=new Padding(20), ColumnCount=1, RowCount=9 };
-  layout.RowStyles.Add(new RowStyle(SizeType.Absolute,50)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,54)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,26)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,40)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,92)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,30)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,26)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,46)); Controls.Add(layout);
+  layout.RowStyles.Add(new RowStyle(SizeType.Absolute,50)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,54)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,26)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,40)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,92)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,30)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,26)); layout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute,46)); var tabs=new TabControl { Dock=DockStyle.Fill }; var toolsetTab=new TabPage("Toolset"); var gitTab=new TabPage("Git & Publish"); tabs.TabPages.Add(toolsetTab); tabs.TabPages.Add(gitTab); Controls.Add(tabs); toolsetTab.Controls.Add(layout); var gitPanel=new GitPanel(state,delegate { return folder.Text; },delegate(bool value) { busy=value; toolsetTab.Enabled=!value; }); gitTab.Controls.Add(gitPanel);
   layout.Controls.Add(new Label { Text="SWLOR Toolset", Font=new Font("Segoe UI",26,FontStyle.Bold), AutoSize=true });
   layout.Controls.Add(new Label { Text="Download the files, set up the editor and start creating areas.\nNo Visual Studio needed. First-time setup needs internet and may take a while.", Dock=DockStyle.Fill });
   layout.Controls.Add(new Label { Text="Installation folder (files will go into its SWLOR_NWN subfolder)", AutoSize=true });
@@ -39,6 +39,7 @@ internal sealed class Launcher : Form {
   status.Text="Ready. Internet is needed for first-time setup."; status.Dock=DockStyle.Fill; layout.Controls.Add(status); progress.Dock=DockStyle.Fill; layout.Controls.Add(progress);
   log.Multiline=true; log.ReadOnly=true; log.ScrollBars=ScrollBars.Both; log.WordWrap=false; log.Dock=DockStyle.Fill; log.Font=new Font("Consolas",9); layout.Controls.Add(log);
   utilities.Dock=DockStyle.Fill; utilities.Padding=new Padding(0,6,0,0); layout.Controls.Add(utilities); AddButton("Open files",delegate { OpenFolder(Path.Combine(folder.Text,"SWLOR_NWN")); },utilities); AddButton("Open logs",delegate { OpenFolder(state); },utilities);
+  tabs.Selecting+=delegate(object sender,TabControlCancelEventArgs e) { if(busy) e.Cancel=true; };
   FormClosing+=delegate(object s,FormClosingEventArgs e) { if(busy) { e.Cancel=true; MessageBox.Show(this,"Setup is running. Keep the launcher open until it finishes."); } };
  }
  void AddButton(string title,Action action,FlowLayoutPanel panel=null) { var b=new Button {Text=title,AutoSize=true,MinimumSize=new Size(125,33),Height=33,Padding=new Padding(12,0,12,0)}; b.Click+=delegate {try { action(); } catch(Exception ex) {MessageBox.Show(this,ex.Message,"SWLOR Launcher");}}; (panel??actions).Controls.Add(b); }
@@ -58,11 +59,11 @@ internal sealed class Launcher : Form {
   var info=new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),@"WindowsPowerShell\v1.0\powershell.exe"),"-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand "+Convert.ToBase64String(Encoding.Unicode.GetBytes(command))) {UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
   var p=new Process { StartInfo=info, EnableRaisingEvents=true };
   p.OutputDataReceived+=delegate(object s,DataReceivedEventArgs e) {Line(e.Data);}; p.ErrorDataReceived+=delegate(object s,DataReceivedEventArgs e) {Line(e.Data);};
-  busy=true; actions.Enabled=false; browse.Enabled=false; folder.Enabled=false; log.Clear(); progress.Value=0; status.Text="Starting...";
+  busy=true; actions.Enabled=false; utilities.Enabled=false; browse.Enabled=false; folder.Enabled=false; log.Clear(); progress.Value=0; status.Text="Starting...";
   System.Threading.ThreadPool.QueueUserWorkItem(delegate {
    int code=-1;
    try { p.Start(); p.BeginOutputReadLine(); p.BeginErrorReadLine(); p.WaitForExit(); code=p.ExitCode; } catch(Exception ex) {Line(ex.Message);} finally {p.Dispose();try {File.Delete(script);}catch{} }
-   BeginInvoke((Action)delegate {busy=false;actions.Enabled=true;browse.Enabled=true;folder.Enabled=true;if(code!=0) status.Text="Unable to complete. Read the log above or use Open logs.";else if(action!="Check") status.Text="Toolset launched.";});
+   BeginInvoke((Action)delegate {busy=false;actions.Enabled=true;utilities.Enabled=true;browse.Enabled=true;folder.Enabled=true;if(code!=0) status.Text="Unable to complete. Read the log above or use Open logs.";else if(action!="Check") status.Text="Toolset launched.";});
   });
  }
 }
