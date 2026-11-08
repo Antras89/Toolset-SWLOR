@@ -1,5 +1,9 @@
 ﻿SWLOR Toolset Launcher 1.2
 English edition for Windows x64
+SSL hotfix (November 2026): fixes Git ca-bundle.crt trust-anchor failures
+by using Windows certificate validation (Schannel) only for launcher Git
+HTTPS operations. No global Git changes and no disabled SSL verification.
+Use SWLOR-Toolset1.2-SSLfix.zip and replace your old launcher EXE.
 
 GET STARTED
 1. Extract the ZIP into a folder of your choice.

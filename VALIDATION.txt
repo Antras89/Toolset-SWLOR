@@ -1,3 +1,24 @@
+SSL HOTFIX SOURCE AND PACKAGE VALIDATION — 2026-11-08
+
+Addressed a failure during SWLOR_NWN clone when Git for Windows could not
+load C:/Program Files/Git/mingw64/etc/ssl/certs/ca-bundle.crt.
+Git HTTPS operations use the Schannel backend and Windows certificate store
+through per-command Git config overrides; TLS verification stays enabled.
+No permanent global/system Git configuration is changed.
+
+Static verification completed: the changed PowerShell scripts were embedded
+byte-for-byte in the original unsigned .NET Framework 4.8 x64 executable's
+existing manifest-resource slots without altering resource sizes or other
+assembly bytes. SHA-256 of the resulting EXE was recalculated, and its ZIP
+payload and central directory were checked for entry sizes and CRC metadata.
+
+NOT YET TESTED in this environment: real Windows PowerShell 5.1 execution,
+a live Windows HTTPS clone, Windows UI startup, the complete SWLOR installation,
+and GitHub-authenticated push. The added unit test is included for running
+on Windows and the original v1.2 test results below apply only to v1.2.
+
+--- Original version 1.2 validation follows ---
+
 ﻿VERSION 1.2 VALIDATION — 2026-10-15
 
 Windows x64 .NET Framework build passed.

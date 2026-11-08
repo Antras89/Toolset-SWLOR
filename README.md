@@ -1,6 +1,6 @@
 ﻿# Toolset SWLOR
 
-An independent, unofficial Windows launcher for the SWLOR desktop Toolset, with an English interface. Version 1.2 helps you install the required tools, build the desktop application, launch it, and apply guarded updates.
+An independent, unofficial Windows launcher for the SWLOR desktop Toolset, with an English interface. Version 1.2 (SSL hotfix) helps you install the required tools, build the desktop application, launch it, and apply guarded updates.
 
 This repository is maintained independently by Antras89. It is not an official SWLOR release or a fork of the SWLOR repositories. The launcher downloads the official SWLOR_NWN repository and its pinned SWLOR_Haks assets when installing the Toolset.
 
@@ -8,7 +8,7 @@ This repository is maintained independently by Antras89. It is not an official S
 
 ## Download and start
 
-1. Download [SWLOR-Toolset1.2.zip](SWLOR-Toolset1.2.zip) and extract it.
+1. Download [SWLOR-Toolset1.2-SSLfix.zip](SWLOR-Toolset1.2-SSLfix.zip) and extract it.
 2. Open `SWLOR-Launcher.exe` without administrator privileges.
 3. Select a writable installation folder and click **Install and launch**.
 4. Once the Toolset opens, use **Tools > Area Generator** to create an area.
@@ -44,6 +44,12 @@ For HAK work, commit and push the HAK repository first. Then select SWLOR_NWN an
 Account selection uses a launcher-specific GitHub CLI configuration in `%LOCALAPPDATA%\SWLORLauncher\github-auth`. Credential storage and browser authentication are managed by GitHub CLI. The launcher does not ask for or log a token. The selected account's GitHub noreply address is offered as the commit email; you can edit the author fields.
 
 Working branches and local commits intentionally block the existing automatic updater when they diverge from the official source. Use a separate installation for an untouched upstream checkout, or reconcile your working branch manually. The menu never force-pushes, resets, cleans, or stashes your files. If a commit fails, its selected files may remain staged; resolve the error and retry.
+
+## Windows Git certificate hotfix (November 2026)
+
+The SSL hotfix addresses `error adding trust anchors from file: C:/Program Files/Git/mingw64/etc/ssl/certs/ca-bundle.crt` during checkout. HTTPS operations performed by the launcher (clone, pinned HAK submodule, fetch/update, and Git & Publish push) explicitly use Git for Windows' Schannel backend and the trusted Windows certificate store. No system or global Git configuration is changed; TLS certificate verification is **not disabled**. Other tools continue using their existing Git settings.
+
+Use the hotfix ZIP above, extract it, and run its `SWLOR-Launcher.exe`. To update an existing extracted launcher, replace its EXE with this ZIP's EXE; keep your existing `SWLOR_NWN` repository and personal files. The previous 1.2 ZIP is retained as an archive. If an HTTPS connection still fails, check the Windows certificate store, network proxy, antivirus HTTPS inspection, and launcher logs. Never set `http.sslVerify=false` to work around a certificate problem.
 
 ## Requirements
 
