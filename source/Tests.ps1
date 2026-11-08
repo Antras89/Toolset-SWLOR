@@ -29,6 +29,13 @@ Check 'HTTP rejected' { Reject { Assert-Url 'http://github.com/a.zip' @('github.
 Check 'Lookalike host rejected' { Reject { Assert-Url 'https://github.com.evil.test/a.zip' @('github.com') } }
 Check 'Credentials in URL rejected' { Reject { Assert-Url 'https://user@github.com/a.zip' @('github.com') } }
 Check 'Native exit failure propagated' { Reject { Invoke-Native $script:Git @('not-a-real-subcommand') } }
+Check 'Git HTTPS uses Windows Schannel without changing global config' {
+    $tls = @(Git-Https @('ls-remote','https://github.com/zunath/SWLOR_NWN'))
+    Assert ($tls.Count -eq 6 -and $tls[0] -eq '-c' -and $tls[1] -eq 'http.sslBackend=schannel')
+    Assert ($tls[2] -eq '-c' -and $tls[3] -eq 'http.schannelUseSSLCAInfo=false')
+    Assert ($tls[4] -eq 'ls-remote' -and $tls[5] -match '^https://github.com/')
+    Assert (-not (($tls -join ' ') -match 'sslVerify=false'))
+}
 Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 function Zip([string]$Path,[string]$Entry) { $z=[IO.Compression.ZipFile]::Open($Path,'Create'); try { $e=$z.CreateEntry($Entry); $w=New-Object IO.StreamWriter($e.Open()); $w.Write('payload'); $w.Dispose() } finally { $z.Dispose() } }
 Check 'ZIP traversal rejected before extraction' { $z=Join-Path $TestRoot 'bad.zip'; Zip $z '../escaped.txt'; Reject { Expand-SafeZip $z (Join-Path $TestRoot 'bad-out') }; Assert (-not (Test-Path (Join-Path $TestRoot 'escaped.txt'))) }

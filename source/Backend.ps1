@@ -18,6 +18,9 @@ function Git-Text([string]$Repo, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "Git check failed: $result" }
     return (($result | ForEach-Object { "$_" }) -join "`n").Trim()
 }
+function Git-Https([string[]]$Arguments) {
+    return @('-c','http.sslBackend=schannel','-c','http.schannelUseSSLCAInfo=false') + $Arguments
+}
 function Assert-Url([string]$Url, [string[]]$Hosts) {
     $u = [uri]$Url
     if (-not $u.IsAbsoluteUri -or $u.Scheme -ne 'https' -or $u.UserInfo -or $u.Port -ne 443 -or $Hosts -notcontains $u.Host) { throw "Untrusted download URL: $Url" }
@@ -130,7 +133,6 @@ function Assert-Repository([string]$Repo) {
     if ($origin -cnotmatch '^https://github\.com/zunath/SWLOR_NWN(?:\.git)?$') { throw 'Repository origin must be the official SWLOR_NWN HTTPS URL.' }
 }
 function Assert-Haks([string]$Repo, [switch]$Initialize) {
-    # Refuse changed gitlinks and edited submodule definitions before any update.
     foreach ($argsList in @(@('diff','--quiet','HEAD','--','.gitmodules','SWLOR_Haks'), @('diff','--cached','--quiet','--','.gitmodules','SWLOR_Haks'))) {
         & $script:Git -C $Repo @argsList
         if ($LASTEXITCODE -ne 0) { throw 'Local submodule edits or revision mismatch detected. Resolve manually; nothing was switched.' }
@@ -149,7 +151,7 @@ function Assert-Haks([string]$Repo, [switch]$Initialize) {
     }
     if ((Test-Path -LiteralPath $sub) -and @(Get-ChildItem -LiteralPath $sub -Force).Count -gt 0) { throw 'Uninitialized HAK folder is not empty. Resolve manually.' }
     if (-not $Initialize) { throw 'HAK submodule missing. Use Install and launch.' }
-    Invoke-Native $script:Git @('-C',$Repo,'-c','core.longpaths=true','-c','submodule.SWLOR_Haks.url=https://github.com/zunath/SWLOR_Haks','submodule','update','--init','--depth','1','--','SWLOR_Haks')
+    Invoke-Native $script:Git (Git-Https @('-C',$Repo,'-c','core.longpaths=true','-c','submodule.SWLOR_Haks.url=https://github.com/zunath/SWLOR_Haks','submodule','update','--init','--depth','1','--','SWLOR_Haks'))
     Assert-Haks $Repo
 }
 function Get-Pin([string]$Repo, [string]$Revision) {
@@ -174,10 +176,10 @@ function Assert-UpdateClean([string]$Repo) {
 }
 function Get-UpdateTarget([string]$Repo) {
     Assert-Repository $Repo
-    $remote = Git-Text $Repo @('ls-remote','--symref','origin','HEAD')
+    $remote = Git-Text $Repo (Git-Https @('ls-remote','--symref','origin','HEAD'))
     if ($remote -notmatch '(?m)^ref: refs/heads/([^\s]+)\s+HEAD$') { throw 'Unable to identify the upstream default branch.' }
     $branch = $Matches[1]
-    Invoke-Native $script:Git @('-C',$Repo,'fetch','--no-tags','--no-recurse-submodules','origin',("refs/heads/{0}:refs/remotes/origin/{0}" -f $branch))
+    Invoke-Native $script:Git (Git-Https @('-C',$Repo,'fetch','--no-tags','--no-recurse-submodules','origin',("refs/heads/{0}:refs/remotes/origin/{0}" -f $branch)))
     $target = Git-Text $Repo @('rev-parse',("refs/remotes/origin/{0}" -f $branch))
     $head = Git-Text $Repo @('rev-parse','HEAD')
     Write-Log "Upstream branch: $branch"
@@ -215,8 +217,6 @@ function Assert-UpdatePlan([string]$Repo, $Plan) {
     if ($subhead -ne $oldPin -and -not ($head -eq $Plan.New -and $subhead -eq $newPin)) { throw 'Unexpected HAK revision. Nothing will be switched.' }
 }
 function Complete-Update([string]$Repo, $Plan) {
-    # Both commits were fetched before this journal was written. Retry is bounded
-    # to these exact revisions and never discards intervening edits.
     Assert-UpdatePlan $Repo $Plan
     $pin = Get-Pin $Repo $Plan.New
     $sub = Join-Path $Repo 'SWLOR_Haks'
@@ -247,7 +247,7 @@ function Update-Repository([string]$Repo) {
     $sub = Join-Path $Repo 'SWLOR_Haks'
     $pin = Get-Pin $Repo $plan.New
     Stage 40 'Downloading the updated pinned HAK assets'
-    Invoke-Native $script:Git @('-C',$sub,'fetch','--no-tags','--no-recurse-submodules','--depth','1','https://github.com/zunath/SWLOR_Haks',$pin)
+    Invoke-Native $script:Git (Git-Https @('-C',$sub,'fetch','--no-tags','--no-recurse-submodules','--depth','1','https://github.com/zunath/SWLOR_Haks',$pin))
     Assert-NotRunning
     Assert-UpdatePlan $Repo $plan
     [IO.File]::WriteAllText($journal,($plan | ConvertTo-Json))
@@ -318,7 +318,7 @@ function Main {
         if (-not (Test-Path -LiteralPath $repo)) {
             if ($Action -ne 'Install') { throw 'Repository missing. Use Install and launch.' }
             [IO.Directory]::CreateDirectory($parent) | Out-Null
-            Invoke-Native $script:Git @('-c','core.longpaths=true','clone','--depth','1','--','https://github.com/zunath/SWLOR_NWN',$repo)
+            Invoke-Native $script:Git (Git-Https @('-c','core.longpaths=true','clone','--depth','1','--','https://github.com/zunath/SWLOR_NWN',$repo))
         }
         Assert-Repository $repo
         if ($Action -eq 'Update') { Update-Repository $repo }
@@ -350,3 +350,4 @@ if (-not $LibraryOnly) {
     } catch { Write-Host "ERROR: $($_.Exception.Message)"; exit 1 }
     finally { try { Stop-Transcript | Out-Null } catch {}; if ($lock) { $lock.Dispose() } }
 }
+# Windows Git TLS............

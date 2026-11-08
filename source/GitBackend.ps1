@@ -4,7 +4,6 @@ $gitLibraryOnly = $LibraryOnly
 . (Join-Path $PSScriptRoot 'Backend.ps1') -LibraryOnly
 
 function Invoke-GitCommand([string]$Exe, [string[]]$Arguments, [string]$WorkingDirectory) {
-    # Windows argv quoting. No command shell is involved.
     $quoted = foreach ($arg in $Arguments) {
         '"' + [regex]::Replace([regex]::Replace($arg, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"'
     }
@@ -136,7 +135,7 @@ function Push-SelectedBranch($Request) {
     $permission = (Invoke-Gh @('api',('repos/'+$Request.destination),'--jq','.permissions.push')).Trim()
     if ($permission -ne 'true') { throw 'This account cannot push here. Choose your own fork or a repository you can write to.' }
     $helper = '!"' + $script:Gh.Replace('\','/') + '" auth git-credential'
-    return G @('-c','credential.helper=','-c',('credential.helper='+$helper),'push','--porcelain',('https://github.com/'+$Request.destination+'.git'),('HEAD:refs/heads/'+$branch))
+    return G (Git-Https @('-c','credential.helper=','-c',('credential.helper='+$helper),'push','--porcelain',('https://github.com/'+$Request.destination+'.git'),('HEAD:refs/heads/'+$branch)))
 }
 if ($gitLibraryOnly) { return }
 try {
@@ -175,3 +174,4 @@ try {
     @{ok=$false; error=$_.Exception.Message} | ConvertTo-Json -Compress | Set-Content -LiteralPath $ResultFile -Encoding UTF8
     exit 1
 }
+# GitHub push TLS............................
